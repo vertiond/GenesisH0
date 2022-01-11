@@ -1,5 +1,9 @@
 import hashlib, binascii, struct, array, os, time, sys, optparse
 import scrypt
+import vtc_scrypt_new
+import lyra2re_hash
+import lyra2re2_hash
+import lyra2re3_hash
 import verthash
 
 from vertcoin import verthash_data
@@ -26,14 +30,15 @@ def main():
 
 def get_args():
   parser = optparse.OptionParser()
-  parser.add_option("-t", "--time", dest="time", default=int(time.time()), 
+  parser.add_option("-t", "--time", dest="time", default=1389311371,
                    type="int", help="the (unix) time when the genesisblock is created")
-  parser.add_option("-z", "--timestamp", dest="timestamp", default="The Times 03/Jan/2009 Chancellor on brink of second bailout for banks",
+  parser.add_option("-z", "--timestamp", dest="timestamp", default="01/09/2014 Germany to Help in Disposal of Syrian Chemical Weapons",
                    type="string", help="the pszTimestamp found in the coinbase of the genesisblock")
-  parser.add_option("-n", "--nonce", dest="nonce", default=0,
+  parser.add_option("-n", "--nonce", dest="nonce", default=5749262,
                    type="int", help="the first value of the nonce that will be incremented when searching the genesis hash")
   parser.add_option("-a", "--algorithm", dest="algorithm", default="SHA256",
-                    help="the PoW algorithm: [SHA256|scrypt|X11|X13|X15]")
+                    help="the PoW algorithm: [SHA256|scrypt|X11|X13|X15|scrypt-n|lyra2re|lyra2rev2|lyra2rev3|verthash]")
+# unknown what pubkey vtc used
   parser.add_option("-p", "--pubkey", dest="pubkey", default="04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f",
                    type="string", help="the pubkey found in the output script")
   parser.add_option("-v", "--value", dest="value", default=5000000000,
@@ -43,14 +48,14 @@ def get_args():
 
   (options, args) = parser.parse_args()
   if not options.bits:
-    if options.algorithm == "scrypt" or options.algorithm == "X11" or options.algorithm == "X13" or options.algorithm == "X15" or options.algorithm == "verthash":
+    if options.algorithm == "scrypt" or options.algorithm == "X11" or options.algorithm == "X13" or options.algorithm == "X15" or options.algorithm == "scrypt-n" or options.algorithm == "lyra2re" or options.algorithm == "lyra2rev2" or options.algorithm == "lyra2rev3" or options.algorithm == "verthash":
       options.bits = 0x1e0ffff0
     else:
       options.bits = 0x1d00ffff
   return options
 
 def get_algorithm(options):
-  supported_algorithms = ["SHA256", "scrypt", "X11", "X13", "X15", "verthash"]
+  supported_algorithms = ["SHA256", "scrypt", "X11", "X13", "X15", "scrypt-n", "lyra2re", "lyra2rev2", "lyra2rev3", "verthash"]
   if options.algorithm in supported_algorithms:
     return options.algorithm
   else:
@@ -138,7 +143,7 @@ def generate_hash(data_block, algorithm, start_nonce, bits):
     sha256_hash, header_hash = generate_hashes_from_block(data_block, algorithm)
     last_updated             = calculate_hashrate(nonce, last_updated)
     if is_genesis_hash(header_hash, target):
-      if algorithm == "X11" or algorithm == "X13" or algorithm == "X15" or algorithm == "verthash":
+      if algorithm == "X11" or algorithm == "X13" or algorithm == "X15":
         return (header_hash, nonce)
       return (sha256_hash, nonce)
     else:
@@ -181,6 +186,30 @@ def generate_hashes_from_block(data_block, algorithm):
     except ImportError:
       sys.exit("Cannot run X15 algorithm: module x15_hash not found")
     header_hash = x15_hash.getPoWHash(data_block)[::-1]
+  elif algorithm == 'scrypt-n':
+    try:
+      exec('import %s' % "vtc_scrypt_new")
+    except ImportError:
+      sys.exit("Cannot run scrypt-n algorithm: module vtc_scrypt_new not found")
+    header_hash = vtc_scrypt_new.getPoWHash(data_block)[::-1]
+  elif algorithm == 'lyra2re':
+    try:
+      exec('import %s' % "lyra2re_hash")
+    except ImportError:
+      sys.exit("Cannot run lyar2re algorithm: module lyra2re_hash not found")
+    header_hash = vtc_scrypt_new.getPoWHash(data_block)[::-1]
+  elif algorithm == 'lyra2rev2':
+    try:
+      exec('import %s' % "lyra2re2_hash")
+    except ImportError:
+      sys.exit("Cannot run lyra2rev2 algorithm: module lyra2re2_hash not found")
+    header_hash = vtc_scrypt_new.getPoWHash(data_block)[::-1]
+  elif algorithm == 'lyra2rev3':
+    try:
+      exec('import %s' % "lyra2re3_hash")
+    except ImportError:
+      sys.exit("Cannot run lyra2rev3 algorithm: module lyra2re3_hash not found")
+    header_hash = vtc_scrypt_new.getPoWHash(data_block)[::-1]
   elif algorithm == 'verthash':
     try:
       exec('import %s' % "verthash")
