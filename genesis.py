@@ -6,8 +6,6 @@ import lyra2re2_hash
 import lyra2re3_hash
 import verthash
 
-from vertcoin import verthash_data
-
 from construct import *
 
 
@@ -151,14 +149,16 @@ def generate_hash(data_block, algorithm, start_nonce, bits):
      data_block = data_block[0:len(data_block) - 4] + struct.pack('<I', nonce)
 
 
-# def load_verthash_data():
-#   with open('verthash.dat', 'rb') as f:
-#     verthash_data = f.read()
-#
-#   verthash_sum = hashlib.sha256(verthash_data).hexdigest()
-#   assert verthash_sum == 'a55531e843cd56b010114aaf6325b0d529ecf88f8ad47639b6ededafd721aa48'
-#
-#   return verthash_data
+verthash_data = None
+if verthash_data is None:
+  with open('verthash.dat', 'rb') as f:
+    verthash_data = f.read()
+
+  verthash_sum = hashlib.sha256(verthash_data).hexdigest()
+  assert verthash_sum == 'a55531e843cd56b010114aaf6325b0d529ecf88f8ad47639b6ededafd721aa48'
+
+def verthash_hash(dat):
+  return verthash.getPoWHash(dat, verthash_data)
 
 
 def generate_hashes_from_block(data_block, algorithm):
@@ -215,7 +215,6 @@ def generate_hashes_from_block(data_block, algorithm):
       exec('import %s' % "verthash")
     except ImportError:
       sys.exit("Cannot run verthash algorithm: module verthash not found")
-    # verthash_data = load_verthash_data()
     header_hash = verthash.getPoWHash(data_block, verthash_data)[::-1]
   return sha256_hash, header_hash
 
