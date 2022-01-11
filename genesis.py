@@ -1,5 +1,8 @@
 import hashlib, binascii, struct, array, os, time, sys, optparse
 import scrypt
+import verthash
+
+from vertcoin import verthash_data
 
 from construct import *
 
@@ -40,14 +43,14 @@ def get_args():
 
   (options, args) = parser.parse_args()
   if not options.bits:
-    if options.algorithm == "scrypt" or options.algorithm == "X11" or options.algorithm == "X13" or options.algorithm == "X15":
+    if options.algorithm == "scrypt" or options.algorithm == "X11" or options.algorithm == "X13" or options.algorithm == "X15" or options.algorithm == "verthash":
       options.bits = 0x1e0ffff0
     else:
       options.bits = 0x1d00ffff
   return options
 
 def get_algorithm(options):
-  supported_algorithms = ["SHA256", "scrypt", "X11", "X13", "X15"]
+  supported_algorithms = ["SHA256", "scrypt", "X11", "X13", "X15", "verthash"]
   if options.algorithm in supported_algorithms:
     return options.algorithm
   else:
@@ -135,12 +138,22 @@ def generate_hash(data_block, algorithm, start_nonce, bits):
     sha256_hash, header_hash = generate_hashes_from_block(data_block, algorithm)
     last_updated             = calculate_hashrate(nonce, last_updated)
     if is_genesis_hash(header_hash, target):
-      if algorithm == "X11" or algorithm == "X13" or algorithm == "X15":
+      if algorithm == "X11" or algorithm == "X13" or algorithm == "X15" or algorithm == "verthash":
         return (header_hash, nonce)
       return (sha256_hash, nonce)
     else:
      nonce      = nonce + 1
-     data_block = data_block[0:len(data_block) - 4] + struct.pack('<I', nonce)  
+     data_block = data_block[0:len(data_block) - 4] + struct.pack('<I', nonce)
+
+
+# def load_verthash_data():
+#   with open('verthash.dat', 'rb') as f:
+#     verthash_data = f.read()
+#
+#   verthash_sum = hashlib.sha256(verthash_data).hexdigest()
+#   assert verthash_sum == 'a55531e843cd56b010114aaf6325b0d529ecf88f8ad47639b6ededafd721aa48'
+#
+#   return verthash_data
 
 
 def generate_hashes_from_block(data_block, algorithm):
@@ -168,6 +181,13 @@ def generate_hashes_from_block(data_block, algorithm):
     except ImportError:
       sys.exit("Cannot run X15 algorithm: module x15_hash not found")
     header_hash = x15_hash.getPoWHash(data_block)[::-1]
+  elif algorithm == 'verthash':
+    try:
+      exec('import %s' % "verthash")
+    except ImportError:
+      sys.exit("Cannot run verthash algorithm: module verthash not found")
+    # verthash_data = load_verthash_data()
+    header_hash = verthash.getPoWHash(data_block, verthash_data)[::-1]
   return sha256_hash, header_hash
 
 
