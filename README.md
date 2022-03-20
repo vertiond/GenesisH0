@@ -2,7 +2,7 @@
 A python script for creating the parameters required for a unique genesis block. SHA256/scrypt/X11/X13/X15/scrypt-n/lyra2re/lyra2rev2/lyra2rev3/verthash.
 
 ### Dependencies
-    sudo pip install scrypt construct==2.5.2 verthash lyra2re2_hash vtc-scrypt-new
+    pip install scrypt construct==2.5.2 vertcoinhash
 
 ### Examples
 
